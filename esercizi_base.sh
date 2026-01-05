@@ -5,8 +5,10 @@
 
 # 1.
 # Configura sudo affinchè un utente possa eseguire solo un comando specifico (e.s: nmap)
+# https://heshandharmasena.medium.com/explain-sudoers-file-configuration-in-linux-1fe00f4d6159
 # sudo apt install nmap
 # sudo visudo
+# which nmap
 # usr ALL = NOPASSWD: /usr/bin/nmap
 
 # tee -a:  leggi l'input e scrivilo in append su un file
@@ -20,7 +22,18 @@ echo 'usr ALL = NOPASSWD: /usr/bin/nmap' | sudo EDITOR='tee -a' visudo
 # sudo visudo
 # usr ALL=/usr/bin/nmap, !/usr/bin/nmap ^.*-p.*$
 
-echo 'usr ALL=/usr/bin/nmap, !/usr/bin/nmap ^.*-p.*$' | sudo EDITOR='tee -a' visudo
+echo 'usr ALL=/usr/bin/nmap, !/usr/bin/nmap ""' | sudo EDITOR='tee -a' visudo
+
+# Configurazione sudoers per fare eseguire sudo nmap -p, sudo nmap e bloccare tutto il resto:
+
+# prova ALL=(ALL:ALL) /usr/bin/nmap ^-p$
+# prova ALL=(ALL:ALL) /usr/bin/nmap ""
+
+# altro esempio brutto:sudo cat /var/log/auth.log /etc/shadow ovvero si ha in sudoers:
+# utente_name ALL = (root) NOPASSWD:/bin/cat /var/log/*
+# senza ! l'utente potrebbe cambiare la password di root:
+# user   ALL = /usr/bin/passwd [a-zA-Z0-9_]*, !/usr/bin/passwd root
+
 
 # 3.
 # Cercare tutti gli eseguibili con SUID
@@ -29,11 +42,18 @@ echo 'usr ALL=/usr/bin/nmap, !/usr/bin/nmap ^.*-p.*$' | sudo EDITOR='tee -a' vis
 #
 # -exec ls -ldb {} \ memorizes data in ldb format (used to provide a detailed listing)
 
-find / -user root -perm -4000 -exec ls -ldb {} \; >/tmp/files_with_suid.txt
+find / -user root -perm -4000 2>/dev/null -exec ls -ldb {} \; >/tmp/files_with_suid.txt
 find / -user root -perm -2000 -exec ls -ldb {} \; >/tmp/files_with_guid.txt
 
+# Per levare i permessi a file sospetti, di solito i file con suid non sono di utenti, ma di root
+# Se un utente ha un file con suid settato può facilmente diventare root
+# cat /tmp/files_with_suid.txt
+# Controlla prima: ls -l /path_to_file
+# chmod u-s /path_to_file 
+# chmod g-s /path_to_file_o_directory
 # 4.
-# Creare uno unit file di Systemd per permettere una shell aperta a tutti sulla rete (netcat in modalità listen con il processo /bin/bash) e provare a connettersi dalla propria macchina usando netcat
+# Creare uno unit file di Systemd per permettere una shell aperta a tutti sulla rete 
+# (netcat in modalità listen con il processo /bin/bash) e provare a connettersi dalla propria macchina usando netcat
 
 # inside the vm:
 # vi /usr/sbin/openshell.sh : #!/bin/bash
@@ -42,10 +62,10 @@ find / -user root -perm -2000 -exec ls -ldb {} \; >/tmp/files_with_guid.txt
 #
 # from the host:  
 # nc localhost 1234 
+# occhio a sudo (in caso va messo davanti ai comandi. 
 
-echo -e '#!/bin/bash \nnc -l -p 1234 -e /bin/bash' >  /usr/sbin/openshell.sh
-chmod +x openshell.sh
-
+echo -e '#!/bin/bash \nnc -l -p 1234 -e /bin/bash' > sudo /usr/sbin/openshell.sh
+chmod +x /usr/sbin/openshell.sh
 
 tee /etc/systemd/system/openshell.service << EOF 
 [Unit]
@@ -65,22 +85,24 @@ sudo systemctl daemon-reload
 sudo systemctl start openshell.service
 sudo systemctl enable openshell.service
 
+#Per far un test di verifica prova a connetterti localmente nc 127.0.0.1 1234 (se riesci a fare whoami e esce root è fatta)
+
 # 6. 
 # Installare e configurare un modulo PAM per richiedere caratteristiche minime alla password (min 8 caratteri, maiuscole, minuscole e simboli)
 
 # sudo apt install libpam-pwquality
-#
+# prima di far qualunque cosa facciamo un backup dello scritp, altrimenti un errore potrebbe bloccare tutti i login
+sudo cp /etc/pam.d/common-password /etc/pam.d/common-password.backup
+
 # sudo nano /etc/pam.d/passwd
 # password    required    pam_pwquality.so retry=3q
 # sudo nano /etc/security/pwquality.conf
 # minlen = 8
 # ucredit = -1
 # lcredit = -1
+# Sed è un domando molto utile permette di inserire prima di pam_unix_so la riga giusta
 
-
-echo 'password    required    pam_pwquality.so retry=3' | tee -a sudo /etc/pam.d/passwd:
-
-echo -e 'minlen = 8 \nucredit = -1 \nlcredit = -1' | tee -a sudo /etc/security/pwquality.conf:
+sudo sed -i '/pam_unix.so/i password      requisite       pam_pwquality.so retry=3 minlen=8 ucredit=-1 lcredit=-1 dcredit=-1 ocredit=-1' /etc/pam.d/common-password
 
 # 7.1
 # Imposta una password a GRUB così da non permettere l'avvio del sistema operativo con parametri del kernel non standard
