@@ -3,6 +3,10 @@
 # per aggiungere un utente al gruppo sudoers
 # sudo adduser <username> sudo
 
+# PRE TUTTO: 
+sudo cp /etc/ssh/sshd_config /etc/ssh/sshd_config.original
+sudo chmod a-w /etc/ssh/sshd_config.original
+
 # 1.
 # Configura sudo affinchè un utente possa eseguire solo un comando specifico (e.s: nmap)
 # https://heshandharmasena.medium.com/explain-sudoers-file-configuration-in-linux-1fe00f4d6159
