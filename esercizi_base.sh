@@ -49,6 +49,8 @@ echo 'usr ALL=/usr/bin/nmap, !/usr/bin/nmap ""' | sudo EDITOR='tee -a' visudo
 find / -user root -perm -4000 2>/dev/null -exec ls -ldb {} \; >/tmp/files_with_suid.txt
 find / -user root -perm -2000 -exec ls -ldb {} \; >/tmp/files_with_guid.txt
 
+# Per capire chi ha quali permessi set user id e group id, poi se c'è un utente es: gianni quello che si fa è scrivere id gianni, group gianni per vedere se ha credenziali da root
+
 # Per levare i permessi a file sospetti, di solito i file con suid non sono di utenti, ma di root
 # Se un utente ha un file con suid settato può facilmente diventare root
 # cat /tmp/files_with_suid.txt
