@@ -4,6 +4,12 @@
 # sudo adduser <username> sudo
 
 # PRE TUTTO: 
+# Per collegarti via SSH:
+# sulla VM digita 
+# ip a 
+# scoperto l'ip della macchina vai sul terminale del PC dell'aula campus e scrivi:
+# ssh nome_utente@ip_trovato (controlla che la VM abbia la network a bridge e non NAT)
+
 sudo cp /etc/ssh/sshd_config /etc/ssh/sshd_config.original
 sudo chmod a-w /etc/ssh/sshd_config.original
 
@@ -45,9 +51,10 @@ echo 'usr ALL=/usr/bin/nmap, !/usr/bin/nmap ""' | sudo EDITOR='tee -a' visudo
 # find / -user root -perm -4000; >/tmp/files_with_suid.txt
 #
 # -exec ls -ldb {} \ memorizes data in ldb format (used to provide a detailed listing)
+# Controlla se sei root altrimenti tocca fare il comando con sudo
 
-find / -user root -perm -4000 2>/dev/null -exec ls -ldb {} \; >/tmp/files_with_suid.txt
-find / -user root -perm -2000 -exec ls -ldb {} \; >/tmp/files_with_guid.txt
+sudo find / -user root -perm -4000 2>/dev/null -exec ls -ldb {} \; >/tmp/files_with_suid.txt
+sudo find / -user root -perm -2000 -exec ls -ldb {} \; >/tmp/files_with_guid.txt
 
 # Per capire chi ha quali permessi set user id e group id, poi se c'è un utente es: gianni quello che si fa è scrivere id gianni, group gianni per vedere se ha credenziali da root
 
