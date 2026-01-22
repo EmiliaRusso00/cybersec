@@ -1,0 +1,1026 @@
+>Comandi bash per Linux (curl cheat.sh/[command]):
+
+1. Configurazione delle interfacce
+-----------------------------------
+- ip addr/ip aioi: Visualizza gli indirizzi IP e le interfacce.
+- ip link: Mostra le interfacce disponibili.
+- ip addr add [IP]/[maschera] dev [interfaccia]: Aggiunge un IP a un'interfaccia.
+- ip addr del [IP]/[maschera] dev [interfaccia]: Rimuove un IP da un'interfaccia.
+- ip link set [interfaccia] up/down: Attiva/disattiva un'interfaccia.
+
+2. Configurazione delle rotte
+-----------------------------
+- ip route: Visualizza la tabella di routing.
+- ip route add [rete]/[maschera] via [gateway] dev [interfaccia]: Aggiunge una rotta.
+- ip route del [rete]/[maschera]: Rimuove una rotta.
+
+3. Risoluzione DNS
+-------------------
+- nslookup/dig/host [dominio]: Query DNS e risoluzione nomi di dominio.
+
+4. Diagnostica di rete
+-----------------------
+- ping [host]: Testa la raggiungibilità di un host.
+- traceroute/mtr [host]: Analizza il percorso verso un host.
+- curl/wget [url]: Effettua richieste HTTP/HTTPS o scarica file.
+- netstat -tulnp / ss -tulnp: Mostra connessioni attive e porte aperte.
+- ethtool [interfaccia]: Mostra/configura parametri hardware.
+
+5. Utilizzo di systemd e systemctl
+-----------------------------------
+- systemctl: Mostra i servizi, le units.
+- systemctl status [servizio]: Mostra lo stato di un servizio.
+- systemctl start [servizio]: Avvia un servizio.
+- systemctl stop [servizio]: Arresta un servizio.
+- systemctl restart [servizio]: Riavvia un servizio.
+- systemctl enable [servizio]: Abilita l'avvio automatico di un servizio.
+- systemctl disable [servizio]: Disabilita l'avvio automatico di un servizio.
+- systemctl list-units: Mostra i servizi attivi.
+- systemctl list-timers: Mostra i timer attivi.
+- systemctl daemon-reload: Ricarica i file di configurazione di systemd.
+- journalctl -u [servizio]: Visualizza i log di un servizio.
+
+-----File etc/passwd--------
+Login name
+ Encrypted password
+• No more used, but kept for compatibility reasons
+ Numerical user ID (root is UID=0)
+ Numerical group ID
+ User name
+• also known as the GECOS field
+ User home directory (es. /home/pizzonia)
+ User command interpreter (es. /bin/bash)
+
+-----File etc/shadow--------
+Login name (foreign key /etc/passwd)
+ Encrypted password
+• $id$salt$hashedpassword
+• id: algorithm code
+ Days since Jan 1, 1970 that password was last changed
+ Days before password may be changed
+ Days after which password must be changed
+ Days before password is to expire that user is warned
+ Days after password expires that account is disabled
+ Days since Jan 1, 1970 that account is disabled
+ A reserved field
+
+MAI MODIFICARE DIRETTAMENTE PASSWD E SHADOW:
+- sudo useradd username: aggiunge un nuovo utente
+- sudo adduser username: aggiunge un nuovo utente, più semplice di useradd
+- sudo userdel username: cancella un utente
+- sudo usermod <parametri vari>: cambia username, userid, user shell, user directory ecc
+- passwd: cambia pass utente corrente
+- passwd [username]: cambia pass di username 
+- su - username: cambia utente
+---------sudoers---------
+- configurazione nel file: /etc/sudoers
+- modifiche: apertura di /etc/sudoers con visudo
+
+6. Monitoraggio della rete
+---------------------------
+- iftop/nload: Monitoraggio del traffico in tempo reale.
+- tcpdump -i [interfaccia]: Analizza pacchetti in tempo reale.
+
+7. Configurazione di iptables
+-----------------------------
+- sudo iptables -L: Visualizza le regole del firewall.
+- sudo iptables -A [catena] -p [protocollo] --dport [porta] -j [azione]: Aggiunge una regola.
+- iptables -D [catena] [numero_regola]: Rimuove una regola specifica.
+- iptables -F: Cancella tutte le regole.
+- iptables -P [catena] [policy]: Imposta la policy predefinita (ACCEPT/DROP).
+- iptables-save > [file]: Salva la configurazione corrente in un file (stampa su stdout e redireziona su file).
+- iptables-restore < [file]: Ripristina una configurazione salvata.
+
+### Options principali:
+- -A / --append: Aggiungere una regola alla fine di una catena.
+- -C / --check: Cerca una regola che soddisfi i requisiti della catena.
+- -D / --delete: Rimuovere una regola da una catena.
+- -F / --flush: Rimuove tutte le regole da una catena.
+- -I / --insert: Aggiungere una regola a una catena in una determinata posizione.
+- -L / --list: Visualizzare tutte le regole in una catena.
+- -N / --new-chain: Crea una nuova catena.
+- -v / --verbose: Mostra ulteriori informazioni quando si utilizza un'opzione di elenco.
+- -X / --delete-chain: Elimina una catena specificata.
+
+### Parametri di matching principali:
+- -p [protocollo]: Specifica il protocollo (es. 'tcp', 'udp', 'icmp').
+- --dport [porta]: Specifica la porta di destinazione (es. '80' per HTTP).
+- --sport [porta]: Specifica la porta di origine.
+- --src [IP]: Specifica l'indirizzo IP di origine.
+- --dst [IP]: Specifica l'indirizzo IP di destinazione.
+- -s [IP]: Abilita il matching dell'indirizzo IP di origine.
+- -d [IP]: Abilita il matching dell'indirizzo IP di destinazione.
+- -i [interfaccia]: Match sull'interfaccia di ingresso.
+- -o [interfaccia]: Match sull'interfaccia di uscita.
+- -m state: Abilita il modulo 'state' per monitorare lo stato della connessione (es. '--state NEW' per nuove connessioni).
+- -m multiport: Permette di specificare più porte (es. '--sports 21,22,23').
+- -m recent: Permette di limitare il numero di connessioni provenienti dallo stesso indirizzo.
+
+### Moduli iptables:
+- conntrack: Permette di accedere al connection tracking.
+- icmp / icmp6: Se nei parametri specifichiamo icmp come protocollo (es. '-p icmp' per icmp o '-p icmp6' per icmpv6).
+- iprange: Indica un range di indirizzi IP (es. '--src-range 192.168.1.1-192.168.1.255').
+- length: Specifica la lunghezza del payload di livello 3 (es. '--length 100').
+- limit: Specifica il matching con uno specifico rate, usando un token bucket (es. '--limit 10/sec').
+- mac: Specifica il MAC address (es. '--mac-source [indirizzo MAC]').
+- pkttype: Specifica il tipo del pacchetto (es. '--pkttype unicast').
+- quota: Specifica un contatore di byte, decrementato ad ogni pacchetto che fa matching.
+- recent: Permette di specificare una lista di indirizzi IP che fanno matching (es. '--name blacklist --rcheck').
+- state: Nonostante il firewall sia stateless, è possibile indicare condizioni di matching con uno specifico stato di connessione: 'NEW', 'ESTABLISHED', 'INVALID', 'RELATED', 'UNTRACKED'.
+- tcp: Se nei parametri specifichiamo tcp come protocollo (es. '-p tcp').
+- time: Facciamo matching specificando condizioni temporali (es. '--dport 80 --time 08:00-18:00').
+- ttl: Specifica condizioni sul valore del TTL nell’IP header (es. '--ttl 64').
+- udp: Se nei parametri specifichiamo udp come protocollo (es. '-p udp').
+- string: Permette di fare matching su stringhe specifiche all’interno del payload del pacchetto.
+
+es. sudo iptables -A FORWARD -p tcp --dport 30 -m state --state NEW -j ACCEPT
+sudo iptables -A INPUT -p tcp --dport 22 --source 1.2.3.4 -j ACCEPT  -> accetta connessioni tcp in input relative ad SSH dall'ip 1.2.3.4
+sudo iptables -A INPUT -p tcp --dport 80 -j ACCEPT 
+sudo iptables -A INPUT -p tcp --dport 443 -j ACCEPT
+
+# Blocca il traffico in uscita sulla porta TCP 8080
+iptables -A OUTPUT -p tcp --dport 8080 -j DROP
+
+# Consenti traffico in ingresso sulla porta 80 (webserver) da qualunque sorgente
+iptables -A INPUT -p tcp --dport 80 -j ACCEPT
+
+# Consenti traffico in ingresso sulla porta 22 (SSH) solo dalla rete 193.204.161.0/24
+iptables -A INPUT -p tcp --dport 22 -s 193.204.161.0/24 -j ACCEPT
+
+
+8. Comandi Bash generali
+-------------------------
+- ls: Mostra file nella directory corrente.
+- cd [directory]: Cambia directory.
+- echo [stringa]: Stampa stringa o contenuto di una variabile.
+- mkdir [cartella]: Crea una directory.
+- cat [file]: Stampa il contenuto di un file.
+- nano [file]: Editor di testo.
+- ps: Mostra processi in esecuzione (UID del processo).
+- ps aux: Mostra tutti i processi attivi con dettagli (utente, CPU, RAM, comando).
+- which [comando]: Mostra il percorso di un eseguibile.
+- mv [sorgente] [destinazione]: Sposta o rinomina un file.
+- htop: Mostra processi attivi in vista interattiva.
+- head/tail [file]: Mostra l'inizio/la fine di un file.
+- less [file]: Visualizzatore di testo.
+- env: Mostra variabili d'ambiente.
+- chown [utente:gruppo] [file]: Cambia proprietario e gruppo.
+- chmod [permessi] [file]: Cambia permessi di un file.
+- grep "search_pattern" path/to/file: cerca quella reg exp nel file
+- nl nomefile: stampa il file mostrando l'indice della riga (corrisponde al numero di riga di sed)
+- nl -ba file.txt: mostra anche righe non vuote
+- ls -al nomedirectory: Mostra tutti i file e le directory in nomedirectory
+- ls -ld nomedirectory: Mostra solo le informazioni sulla directory stessa, non il contenuto
+- usermod -aG [gruppi] [nomeutente]: aggiunge utente a gruppo
+
+# Comando chmod - Cambiare i permessi dei file e delle directory
+
+- ls -l: mostra i permessi dei file
+- ls -al nome directory: 
+
+## 1. Uso con notazione simbolica
+# Simboli principali:
+# + : Aggiunge i permessi specificati al file o alla directory
+# - : Rimuove i permessi specificati dal file o dalla directory
+# = : Imposta esattamente i permessi specificati, rimuovendo tutti gli altri non inclusi
+
+# Aggiungere permessi
+chmod u+x file.txt   # Aggiunge il permesso di esecuzione all'utente
+chmod g+w file.txt   # Aggiunge il permesso di scrittura al gruppo
+chmod o+r file.txt   # Aggiunge il permesso di lettura agli altri
+
+# Rimuovere permessi
+chmod u-x file.txt   # Rimuove il permesso di esecuzione all'utente
+chmod g-w file.txt   # Rimuove il permesso di scrittura al gruppo
+chmod o-r file.txt   # Rimuove il permesso di lettura agli altri
+
+# Impostare permessi specifici
+chmod u=rwx,g=rx,o=r file.txt   # Imposta esattamente i permessi specifici per utente, gruppo e altri
+chmod a=r file.txt             # Rimuove tutti i permessi eccetto la lettura per tutti (utente, gruppo, altri)
+
+## 2. Uso con notazione numerica (ottale)
+# Sintassi: chmod [permessi] file
+# Permessi: somma dei valori binari
+# r=4, w=2, x=1
+chmod 755 file.txt   # Utente (rwx), gruppo (r-x), altri (r-x)
+chmod 644 file.txt   # Utente (rw-), gruppo (r--), altri (r--)
+chmod 700 file.txt   # Utente (rwx), gruppo (---), altri (---)
+
+## 3. Cambiare permessi ricorsivamente
+chmod -R 755 directory/   # Cambia i permessi di tutti i file e directory all'interno di "directory"
+
+## 4. Esempi pratici
+chmod +x script.sh        # Rende un file eseguibile per tutti
+chmod 600 private.key     # Solo l'utente può leggere e scrivere il file
+chmod 777 shared_folder/  # Permessi completi per tutti (da evitare se non necessario)
+chmod ugo+rwx leggi.txt   # Da a tutti i permessi di rwx
+
+## 5. Opzioni utili
+chmod --reference=altrofile file.txt  # Copia i permessi da "altrofile" a "file.txt"
+
+- man [comando]: Mostra il manuale di un comando.
+- sudo !!: Ripete l'ultimo comando con permessi di amministratore.
+- snap run code / code: Apre Visual Studio Code (entrambi i comandi funzionano).
+- > [file]: Reindirizza l'output su un file (es. 'cat /etc/passwd > /tmp/foobar').
+- comando1 | comando2: invia l'output di comando1 come input a comando2
+
+>Come creare snapshot di una macchina virtuale (VBox)?
+
+Controllare sulle opzioni (Options -> Snapshots) della singola macchina, sulla finestra di VBox.
+	VBoxHardening.log può essere utile insieme a VBox.log (Options -> Logs)
+
+>Connessione SSH su IP della macchina virtuale (anche con VSCode)?
+
+Controllare sezione "Connect to..." -> "Connect to Host" -> "Configure SSH Hosts"
+
+Crerare copia configurazione e renderla accessibile:
+
+	sudo cp /etc/ssh/sshd_config /etc/ssh/sshd_config.original
+	sudo chmod a-w /etc/ssh/sshd_config.original
+
+
+
+>Creare ed eseguire script bash?
+
+1. Creazione dello script
+--------------------------
+- nano [nome_script.sh]: Apre l'editor `nano` per scrivere lo script.
+- vim [nome_script.sh]: Apre l'editor `vim` per scrivere lo script.
+- touch [nome_script.sh]: Crea un nuovo file vuoto per lo script.
+- echo -e '#!/bin/bash' > [nome_script.sh]: Crea il file con la shebang per `bash`.
+
+PRIMA RIGA DEVE ESSERE #!/bin/bash
+NANO CTRL+O SALVA
+NANO CTRL+X ESCE
+File bash: #indica commento
+2. Rendere eseguibile lo script
+-------------------------------
+- chmod +x [nome_script.sh]: Rende il file eseguibile.
+
+3. Esecuzione dello script
+--------------------------
+- ./[nome_script.sh]: Esegue lo script nella directory corrente.
+- bash [nome_script.sh]: Esegue lo script con il comando `bash`.
+- sh [nome_script.sh]: Esegue lo script con la shell `sh`.
+
+4. Debugging dello script
+-------------------------
+- bash -x [nome_script.sh]: Esegui lo script in modalità di debugging.
+- set -x: Aggiungi questa riga nello script per abilitare il debugging.
+
+5. Altri comandi utili
+----------------------
+- echo [testo] > [file]: Sovrascrive il file con il testo.
+- echo [testo] >> [file]: Aggiunge il testo alla fine del file.
+- cat [file]: Visualizza il contenuto di un file.
+- vi/vim [file]: Modifica un file con l'editor `vim`.
+
+6. Visualizzazione dei permessi dei file
+----------------------------------------
+- ls -l [file]: Visualizza i permessi di un file o directory.
+- stat [file]: Mostra informazioni dettagliate, compresi i permessi, su un file.
+- ls -lh [file]: Visualizza i permessi con le dimensioni in formato leggibile.
+- getfacl [file]: Mostra le ACL (Access Control List) di un file.
+
+>Comandi principali per usare "sed":
+
+1. Sintassi di base
+-------------------
+sed [opzioni] 'comando' [file]
+
+2. Comandi principali
+----------------------
+- sed 's/pattern/sostituto/' file: Sostituisce la prima occorrenza di `pattern` con `sostituto` in ogni riga.
+- sed 's/pattern/sostituto/g' file: Sostituisce tutte le occorrenze di `pattern` con `sostituto`.
+- sed 's/pattern/sostituto/2' file: Sostituisce la seconda occorrenza di `pattern` con `sostituto`.
+- sed 's/pattern/sostituto/3p' file: Sostituisce la terza occorrenza e stampa la riga.
+- sed 'nd' file: Rimuove la riga `n` (es. `sed '3d'` rimuove la terza riga).
+- sed '/pattern/d' file: Elimina tutte le righe che contengono `pattern`.
+- sed -n 'np' file: Stampa solo la riga `n` (es. `sed -n '3p'` stampa la terza riga).
+- sed -n '/pattern/p' file: Stampa tutte le righe che contengono `pattern`.
+- sed -i 's/pattern/sostituto/g' file: Modifica in-place, sostituisce `pattern` con `sostituto` nel file.
+- sed 'na testo' file: Aggiunge `testo` dopo la riga `n` (es. `sed '3a Testo aggiunto' file`).
+- sed 'ni testo' file: Inserisce `testo` prima della riga `n` (es. `sed '3i Testo inserito' file`).
+- sed 'n,m s/pattern/sostituto/' file: Sostituisce `pattern` con `sostituto` nelle righe da `n` a `m`.
+- sed 'N' file: Aggiunge la riga successiva nel buffer corrente.
+- sed 'n c\sostituito' file: Sostituisce interamente la riga n con il testo sostituito
+
+3. Opzioni utili
+----------------
+- sed -n: Disabilita la stampa automatica delle righe, stampa solo quelle modificate con `p`.
+- sed -e: Esegue più comandi di `sed`.
+- sed -f file_comandi file: Esegue i comandi nel file `file_comandi` sul file di input.
+
+4. Esempi comuni
+----------------
+- sed -i 's/foo/bar/g' file.txt: Sostituisce globalmente in un file.
+- sed '/pattern/d' file.txt: Rimuove le righe che contengono un pattern.
+- sed -n '/pattern/p' file.txt: Stampa solo le righe che contengono un pattern.
+- sed '3a Testo aggiunto' file.txt: Aggiunge testo alla fine della riga 3.
+- sed '2i Testo inserito' file.txt: Inserisce testo prima della riga 2.
+
+- sed 's/hola/ciao/' test.sh > test.sh ATTENZIONE: QUESTO NON FUNZIONA, > test.sh APRE IL FILE IN MODALITA' SCRITTURA
+CANCELLANDO TUTTO QUELLO CHE CONTIENE 
+- sed -i '3d' file.txt: cancella la terza riga
+- sed -i '/cia/d' test.sh: cancella le righe che contengono cia
+- sed -i '1a ciao' test.sh: aggiunge ciao dopo la prima riga
+- sed -i '1i ciao' test.sh: aggiunge ciao prima della prima riga
+- sed -i '5 c\non vuoto!' test.sh : sostituisce quel testo alla riga 5
+- sed -i '/pattern/c\nuovariga' file: trova la riga contenente quel pattern e la modifica interamente con nuovariga
+
+SE DEVI MODIFICARE FILE, ESEGUI PRIMA SED SENZA -i, IN MODO CHE TI STAMPA IL RISULTATO.
+QUANDO SEI SICURO USA -i PER SOVRASCRIVERE!
+
+#############################################################################
+PER ANDARE A CAPO SU BASH: testo\ e digita invio, andrà a capo da solo
+##############################################################################
+
+>Configura sudo affinchè un utente possa eseguire solo un comando specifico (e.s: nmap)
+
+https://heshandharmasena.medium.com/explain-sudoers-file-configuration-in-linux-1fe00f4d6159
+
+1. Apri il terminale con un utente amministratore.  
+2. Modifica il file sudoers con visudo:  
+   sudo visudo  
+3. Aggiungi la riga:  
+   utente ALL=(ALL:ALL) /usr/bin/nmap  
+   (Sostituisci "utente" con il nome dell'utente e verifica il percorso con "which nmap).  
+   Nota: La riga `ALL=(ALL:ALL) /usr/bin/nmap` consente all'utente di eseguire il comando `nmap` come qualsiasi utente e gruppo, ma richiederà la password di sudo per farlo.  
+4. Salva e chiudi il file.  
+5. Rimuovi l'utente dal gruppo sudo per limitare altri privilegi:  
+   sudo deluser utente sudo  
+6. Testa il comando con l'utente configurato:  
+   sudo /usr/bin/nmap 
+
+
+Script bash:
+
+#!/bin/bash
+
+sudo echo "prova ALL=(ALL:ALL) /usr/bin/nmap" >> /etc/sudoers
+
+
+!/bin/bash
+
+sudo echo "prova ALL=(ALL:ALL) /usr/bin/nmap" > /etc/sudoers.d/prova
+
+NOTA > SOVRASCRIVE IL FILE DESTINAZIONE, >> FA UNA APPEND
+
+------------------------------------------------------------------------------
+
+
+>Configura sudo affinchè un utente possa eseguire solo un comando specifico ma senza un parametro (e.s: si puo eseguire nmap ma non nmap -p)
+https://www.sudo.ws/posts/2022/03/sudo-1.9.10-using-regular-expressions-in-the-sudoers-file/
+
+Come prima ma specificando "" accanto al file name del comando -> può essere eseguito solo senza parametri!
+
+!/bin/bash
+
+sudo echo "prova ALL=(ALL:ALL) /usr/bin/nmap \"\"" > /etc/sudoers.d/prova
+
+NOTA CHE CI SONO GLI BACKSLASH \ PER FARE ESCPAING DEL CARATTERE DOPO
+
+oppure sudo echo 'prova ALL=(ALL:ALL) /usr/bin/nmap ""' > /etc/sudoers.d/prova
+
+<In sudoers, regular expressions must start with a ‘^’ character and end with a ‘$’. This makes it explicit what is, or is not, a regular expression. Either the path name, the command line arguments or both may be regular expressions. Because the path name and arguments are matched separately, it is even possible to use wildcards for the path name and regular expressions for the arguments. It is not possible to use a single regular expression to match both the command and its arguments. Regular expressions in sudoers are limited to 1024 characters.
+
+In the following example, user john can run the passwd(1) command as root on any host but is not allowed to change root's password. This kind of rule is impossible to express safely using wildcards.
+
+						john	ALL = /usr/bin/passwd ^[a-zA-Z0-9_]+$, !/usr/bin/passwd root
+>
+
+prova ALL=(ALL:ALL) /usr/bin/nmap ^$ --> ^$ è una regexp vuota, si potrà eseguire solo il comando sudo nmap, senza alcun parametro.
+
+Configurazione sudoers per fare eseguire sudo nmap -p, sudo nmap e bloccare tutto il resto:
+
+prova ALL=(ALL:ALL) /usr/bin/nmap ^-p$
+prova ALL=(ALL:ALL) /usr/bin/nmap ""
+
+>Configura un utente per poter fare cat dei logs ma non essere amministratore (va configurato sudoers in modo opportuno)
+
+1. Modifica il file /etc/sudoers.d/prova inserendo la stringa: prova ALL=(root) /usr/bin/cat ^/var/log/.*$ 
+  
+Esempio negazione: utente prova può fare cat di tutti i log come root, tranne per alternatives.log:
+- prova ALL=(root) /usr/bin/cat ^/var/log/.*$ ,!/usr/bin/cat /var/log/alternatives.log
+
+
+>Cercare tutti gli eseguibili con SUID, SGID
+
+1. Apri il terminale con un utente che ha privilegi di amministratore.  
+2. Utilizza il comando 'find' con 'sudo' per cercare tutti i file eseguibili con il bit SUID attivo:  
+   sudo find / -type f -executable -perm -4000  
+3. Spiegazione del comando:
+   - 'sudo': esegue il comando con privilegi di amministratore (necessari per cercare in tutta la struttura del filesystem).
+   - 'find /': inizia la ricerca dalla radice ('/') ma puoi sostituire '/' con un'altra directory per limitare la ricerca (ad esempio '/home' per cercare solo nella directory home).
+   - '-type f': limita la ricerca ai file (escludendo directory, link simbolici, ecc.).
+   - '-executable': filtra i file che sono eseguibili.
+   - '-perm -4000': cerca i file che hanno il bit SUID attivo (il bit SUID è rappresentato dal permesso 4000 in ottale, il bit SGID è rappresentato dal permesso 2000 in ottale).
+5. Il segno - (meno) davanti a 4000 significa "cerca tutti i file che hanno almeno questo bit impostato" (in altre parole, non deve corrispondere esattamente a 4000, ma deve includere quel bit).
+
+The -perm -4100 means: find any file that has 4 (=setuid) set AND 1 (=x) set for the user while ignoring the remaining bits (group and other).
+
+The -perm /4100 on the other hand means: find any file that has EITHER 4 (=setuid) set OR 1 (=x) set for the user (or both) while ignoring the remaining bits.
+
+6. Se vuoi restringere la ricerca a una directory specifica, modifica il percorso nella ricerca. Ad esempio, per cercare solo nella directory '/usr':
+   sudo find /usr -type f -executable -perm -4000  
+7. Configurazione completata.  
+
+8. Parametri principali del comando 'find':
+   - '-type f': cerca solo file (non directory).
+   - '-type d': cerca solo directory.
+   - '-perm': cerca file con permessi specifici (ad esempio '-perm 644' per file con permessi 644).
+   - '-name': cerca file per nome (ad esempio '-name "file.txt"').
+   - '-iname': cerca file per nome ignorando maiuscole/minuscole (ad esempio '-iname "file.txt"').
+   - '-exec': esegue un comando su ogni file trovato (ad esempio '-exec rm {} \;' per rimuovere i file trovati).
+   - '-size': cerca file di una dimensione specifica (ad esempio '-size +1M' per file più grandi di 1MB).
+   - '-atime', '-mtime', '-ctime': cerca file in base al tempo di accesso, modifica o creazione.
+
+find /home/username -type f -perm -002 -exec ls -l {} \;
+
+find /home/username -type d -perm -002 -exec ls -ld {} \;
+
+1.find /home/username
+Cerca ricorsivamente in /home/username (e nelle sue sottodirectory).
+
+2. -type d
+Limita la ricerca alle directory (quindi esclude file regolari, link simbolici, dispositivi, ecc.).
+
+3. -perm -002
+Seleziona le directory che hanno il bit di scrittura per “others” abilitato.
+
+In particolare, 002 in ottale indica rwx r-x r-w come maschera per la parte “others”, ma con il segno - davanti (-perm -002) significa “trova directory che abbiano almeno il bit di scrittura per others” (non necessariamente r-x r-w preciso, ma almeno w per others).
+
+4. -exec ls -ld {} \;
+Per ogni directory trovata, esegui il comando ls -ld {directory}:
+
+5. ls -ld mostra i permessi, il proprietario, il gruppo, la data di modifica, ecc. della directory, senza entrare nella directory stessa.
+{} indica il percorso della directory trovata, che viene inserito automaticamente da find.
+\; serve a terminare l’istruzione -exec (è la sintassi richiesta da find).
+
+Se desideri rimuovere i permessi di scrittura da questi file per others, puoi utilizzare: find /home/user -type f -perm -0002 -exec chmod o-w {} \;
+
+>Comandi per trovare file
+
+1. which
+   Sintassi: which [programma]
+   Esempio: which python
+   - Trova il percorso di un comando eseguibile nella variabile PATH.
+
+2. whereis
+   Sintassi: whereis [programma]
+   Esempio: whereis bash
+   - Trova il binario, i file di sorgente e i manuali di un comando.
+
+   Parametri principali:
+   - `-b`: Cerca solo i file binari.
+   - `-m`: Cerca solo i manuali.
+   - `-s`: Cerca solo i file di sorgente.
+   - `-u`: Mostra i comandi che non hanno file associati.
+
+3. grep
+   Sintassi: grep [opzioni] [pattern] [file]
+   Esempio: grep "pattern" "file".
+   - Cerca una stringa o pattern all'interno di file.
+
+   Parametri principali:
+   - `-r` o `--recursive`: Cerca ricorsivamente nelle sottodirectory.
+   - `-i`: Ignora la distinzione tra maiuscole e minuscole.
+   - `-l`: Mostra solo i nomi dei file che contengono il pattern.
+   - `-n`: Mostra il numero di riga in cui è trovato il pattern.
+   - `-v`: Inverti la ricerca, mostrando le righe che **non** corrispondono al pattern.
+   - `-w`: Cerca solo corrispondenze complete (parole intere).
+   - `-c`: Mostra solo il numero di righe che corrispondono al pattern.
+sudo grep francesco /etc/shadow: cerca le righe con francesco nel file shadow
+sudo grep -n francesco /etc/shadow: mostra anche il numero di riga
+
+>SecureFlag Server Hardening: Broken Authorization
+
+Horizontal Authorization Controls bypass (ottieniamo accesso ad account con il nostro stesso livello di privilegi) / Vertical Authorization Controls bypass (ottieniamo accesso ad account con livello superiore di privilegi rispetto a noi)
+
+Verificato che l'utente admin si potesse connettere tramite la 0.0.0.0/0 invece che solo da 127.0.0.1 (default più sicuro, altrimenti chiunque può connettersi con privilegi amministrativi al DB)
+
+>SecureFlag Server Hardening: Writable Home Directory Leads to Privilege Escalation (Privilege Escalation)
+
+Vertical Privilege Escalation / Horizontal Privilege Escalation
+
+Cambiare i permessi all directory admin, da 733 (rwx-wx-wx) a 700 (rwx------)
+
+>SecureFlag Server Hardening: Insecure MySQL Remote Access
+
+The @'host_name' part is optional. An account name consisting only of a user name is equivalent to 'user_name'@'%'. For example, 'me' is equivalent to 'me'@'%'.
+DROP USER 'root'@'%' -> impediamo all'account 'root' di connettersi da qualsiasi host ('%', wildcard).
+
+>SecureFlag Server Hardening: /etc/group
+
+Accedi con ssh, vedrai con ls -al /etc/group che tale file è scrivibile da tutti (ha w in others). Lo modifichi con nano aggiungendo l'utenza tua, sf, ad un gruppo che sembra essere admin (wheel:10:x:sfadmin,sf). Ri entri nella shell con ssh e vedrai con sudo -s che avrai una shell root.
+Fix: chmod o-w /etc/group: levo permessi in scrittura ad others su quel file.
+
+>Creare uno unit file di Systemd per permettere una shell aperta a tutti sulla rete (netcat in modalità listen con il processo /bin/bash) e provare a connettersi dalla propria macchina usando netcat
+
+1. Crea il nuovo unit file del servizio: 
+	- sudo nano /etc/systemd/system/netcat-shell.service
+2. Edita lo unit file ed inserisci il seguente testo:
+	- sudo nano /etc/systemd/system/netcat-shell.service:
+[Unit]
+Description=Netcat Listening Shell
+After=network.target
+
+[Service]
+ExecStart=/bin/nc -l -p 1234 -e /bin/bash
+Restart=always
+User=root
+
+[Install]
+WantedBy=multi-user.target
+
+ExecStart: Avvia netcat in modalità di ascolto sulla porta 1234 e reindirizza a /bin/bash.
+Restart: Riavvia il servizio se termina.
+User: Specifica che il processo viene eseguito come utente root (necessario per accedere a /bin/bash).
+
+3. Ricarica i file di configurazione di Systemd:
+	- sudo systemctl daemon-reload
+4. Abilita il servizio per l'avvio automatico:
+	- sudo systemctl enable netcat-shell.service
+5. Avvia il servizio:
+	- sudo systemctl start netcat-shell.service
+6. Controlla lo stato del servizio:
+	- sudo systemctl status netcat-shell.service
+7. Connettiti con netcat e ottieni la shell:
+	- nc 127.0.0.1 1234
+
+FILE BASH: uso cat per creare il file ed inserire quel testo. <<EOF indica l'inizio di un input multilinea, > redireziona l'output al file
+!/bin/bash
+
+cat <<EOF > /etc/systemd/system/netcat1-shell.service
+[Unit]
+Description=Netcat Listening Shell
+After=network.target
+
+[Service]
+ExecStart=/bin/nc -l -p 1235 -e /bin/bash
+Restart=always
+User=root
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl enable netcat1-shell.service
+sudo systemctl start netcat1-shell.service
+sudo systemctl status netcat1-shell.service
+
+
+ALTERNATIVA PER SCRIVERE FILE, echo:
+echo -e "giga \nmega!" > testo.txt --> echo -e dice di considerare i \n come accapo!
+
+>Installare modulo PAM per requisiti della password di login
+
+1. Installa il modulo PAM 'libpam-pwquality' (se non già installato):
+   - Comando per sistemi Debian/Ubuntu: 'sudo apt install libpam-pwquality'
+   
+2. Modifica il file di configurazione di PAM relativo alle password:
+   - Apri il file '/etc/pam.d/common-password' (Debian/Ubuntu)
+   - Aggiungi o modifica la riga che utilizza il modulo 'pam_pwquality.so'. Ad esempio:
+     ```
+     password requisite pam_pwquality.so retry=3 minlen=8 ucredit=-1 lcredit=-1 dcredit=-1 ocredit=-1
+     ```
+     Dove:
+     - 'retry=3': Numero massimo di tentativi consentiti.
+     - 'minlen=8': Lunghezza minima della password (8 caratteri).
+     - 'ucredit=-1': Richiede almeno una lettera maiuscola.
+     - 'lcredit=-1': Richiede almeno una lettera minuscola.
+     - 'dcredit=-1': Richiede almeno un numero.
+     - 'ocredit=-1': Richiede almeno un simbolo.
+
+3. Configura ulteriormente il modulo se necessario:
+   - Modifica il file '/etc/security/pwquality.conf' per aggiungere parametri aggiuntivi o personalizzati, ad esempio:
+     ```
+     minlen = 8
+     minclass = 4
+     maxrepeat = 3
+     maxsequence = 3
+     dictcheck = 1
+     ```
+     Dove:
+     - 'minclass=4': Richiede l'uso di almeno 4 classi di caratteri (maiuscole, minuscole, numeri, simboli).
+     - 'maxrepeat=3': Impedisce di ripetere più di 3 volte lo stesso carattere consecutivo.
+     - 'maxsequence=3': Impedisce sequenze di più di 3 caratteri consecutivi.
+     - 'dictcheck=1': Abilita il controllo contro un dizionario di parole comuni.
+
+
+#!/bin/bash
+
+sed -i '/pam_pwquality.so/c\password requisite pam_pwquality.so retry=3 minlen=8 ucredit=-1 lcredit=-1 dcredit=-1 ocredit=-1' /etc/pam.d/common-password
+
+- Nota controlla che nel file /etc/pam.d/passwd per cambiare le pass con passwd ci sia @include common-password
+
+>Imposta una password a GRUB così da non permettere l'avvio del sistema operativo con parametri del kernel non standard
+
+1. Apri il file /etc/grub.d/40_custom con un editor di testo (nano, vim, ecc.):
+	- sudo nano /etc/grub.d/40_custom
+2. Aggiungi in coda qualcosa del genere e salva il file:
+
+set superusers="admin"
+password admin admin
+export superusers
+
+3. Aggiornare la configurazione di GRUB:
+	-sudo update-grub
+
+#!/bin/bash
+
+echo 'set superusers="admin"
+password admin s3cr3t
+export superusers' >> /etc/grub.d/40_custom
+
+sudo update-grub
+
+Per verificare se ha funzionato basta avviare il sistema
+chiederà utenza e password alla schermata di selezione del SO
+
+>Rendere la cartella /var/log leggibile solo da root
+
+1. Verifica i permessi attuali della cartella /var/log:
+   - Comando: 'ls -ld /var/log'
+
+2. Modifica i permessi della cartella per permettere l'accesso solo a root:
+   - Comando: 'sudo chmod 750 /var/log'
+   Dove:
+     - '7' (rwx): Permessi completi per l'utente proprietario (root).
+     - '5' (r-x): Permessi di sola lettura ed esecuzione per il gruppo.
+     - '0' (---): Nessun permesso per gli altri utenti.
+
+Alternativa: sudo chmod o= /var/log
+
+!#/bin/bash
+chmod o-r /var/log
+
+verifica che diritti passano da: drwxr-xr-x  9 root root (u=rwx,g=rx,o=rx)
+a drwxr-x--x  9 root root (u=rwx,g=rx,o=x)
+
+>Trova tutti i processi che hanno un file descriptor aperto dentro la cartella /var/log
+- sudo lsof +D /var/log
+
+Funzionamento di base di lsof:
+- Il comando 'lsof' (List Open Files) elenca tutti i file aperti dai processi in esecuzione su un sistema.
+- In UNIX/Linux, i "file" non sono solo file regolari, ma includono anche socket di rete, pipe, dispositivi e directory.
+- Utile per monitorare risorse, diagnosticare problemi e identificare processi che utilizzano risorse specifiche.
+
+Comandi principali per utilizzare lsof:
+
+1. Elencare tutti i file aperti:
+   - Comando: 'lsof'
+
+2. Filtrare per utente:
+   - Comando: 'lsof -u username'
+   - Mostra i file aperti dai processi dell'utente 'username'.
+
+3. Filtrare per processo:
+   - Comando: 'lsof -p PID'
+   - Mostra i file aperti dal processo con il PID specificato.
+
+4. Trovare chi sta usando un file specifico:
+   - Comando: 'lsof /percorso/del/file'
+   - Mostra i processi che hanno aperto il file indicato.
+
+5. Elencare i file aperti in una directory:
+   - Comando: 'lsof +D /percorso/directory'
+   - Mostra i file aperti direttamente o in tutte le sottodirectory della directory indicata.
+
+6. Monitorare l'utilizzo di una porta:
+   - Comando: 'lsof -i :porta'
+   - Mostra i processi che utilizzano la porta specificata.
+
+7. Filtrare per tipo di connessione di rete:
+   - Comando: 'lsof -i tcp'
+   - Mostra i processi che utilizzano connessioni TCP. Per UDP, sostituisci 'tcp' con 'udp'.
+
+8. Elencare i file aperti da un dispositivo:
+   - Comando: 'lsof /dev/nomedispositivo'
+   - Mostra i processi che stanno utilizzando un dispositivo specifico (ad esempio, '/dev/sda1').
+
+9. Trovare i file aperti da un processo zombie:
+   - Comando: 'lsof +L1'
+   - Mostra i file aperti da processi che sono stati eliminati ma hanno ancora riferimenti attivi.
+
+10. Ottenere solo i PID dei processi:
+   - Comando: 'lsof -t /percorso/del/file'
+   - Mostra solo i numeri di PID dei processi che utilizzano un determinato file o risorsa.
+
+11. Filtrare per protocollo di rete:
+   - Comando: 'lsof -i tcp:22'
+   - Mostra i processi che utilizzano la porta 22 per connessioni TCP (es. SSH).
+
+Opzioni utili aggiuntive:
+
+- '-c nome_comando': Filtra i processi in base al nome del comando.
+  - Comando: 'lsof -c sshd'
+  
+- '-r n': Aggiorna l'output ogni 'n' secondi.
+  - Comando: 'lsof -r 5'
+  
+- '-n' e '-P': Disabilitano la risoluzione DNS e dei nomi di porta per velocizzare l'esecuzione.
+  - Comando: 'lsof -nP'
+
+Esempio di utilizzo combinato:
+
+- Trova tutti i processi che utilizzano file nella directory '/var/log', filtrati per un utente specifico, mostrando solo i PID:
+  - Comando: 'sudo lsof +D /var/log -u username -t'
+
+>Creare utente con password che scade dopo un giorno
+
+Principali opzioni del comando chage:
+
+1. Visualizzare le informazioni sulla scadenza della password di un utente:
+   - Comando: 'chage -l nome_utente'
+   - Mostra le informazioni relative alla scadenza della password dell'utente, inclusi:
+     - Data dell'ultimo cambio della password.
+     - Numero di giorni prima che la password scada.
+     - Periodo minimo tra i cambi della password.
+     - Numero di giorni di preavviso per il cambio password.
+
+2. Impostare la durata massima della validità della password:
+   - Comando: 'chage -M giorni nome_utente'
+   - Imposta il numero massimo di giorni prima che la password scada. Esempio: 'chage -M 7 nome_utente' (scadenza dopo 7 giorni).
+
+3. Impostare la durata minima tra i cambi di password:
+   - Comando: 'chage -m giorni nome_utente'
+   - Imposta il numero minimo di giorni che devono passare tra il cambio di una password. Esempio: 'chage -m 3 nome_utente' (impedisce di cambiare la password prima di 3 giorni).
+
+4. Impostare la data dell'ultimo cambio password:
+   - Comando: 'chage -d data nome_utente'
+   - Imposta la data dell'ultimo cambio della password. La data deve essere nel formato 'aaaa-mm-gg'. Esempio: 'chage -d 2024-12-15 nome_utente'.
+
+5. Impostare il periodo di preavviso prima della scadenza della password:
+   - Comando: 'chage -W giorni nome_utente'
+   - Imposta il numero di giorni di preavviso per il cambio della password. Esempio: 'chage -W 7 nome_utente' (notifica l'utente 7 giorni prima della scadenza).
+
+6. Impostare la data di scadenza della password:
+   - Comando: 'chage -E data nome_utente'
+   - Imposta una data di scadenza per la password dell'utente. Dopo questa data, l'utente non potrà più accedere con la password. La data deve essere nel formato 'aaaa-mm-gg'. Esempio: 'chage -E 2025-01-01 nome_utente'.
+
+7. Impostare la durata di inattività prima che l'account venga disabilitato:
+   - Comando: 'chage -I giorni nome_utente'
+   - Imposta il numero di giorni di inattività dopo la scadenza della password prima che l'account venga disabilitato. Esempio: 'chage -I 30 nome_utente' (account disabilitato dopo 30 giorni di inattività).
+
+8. Rimuovere la data di scadenza della password:
+   - Comando: 'chage -d 0 nome_utente'
+   - Imposta la data dell'ultimo cambio della password come "oggi", forzando l'utente a cambiare la password al prossimo login.
+
+Esempio di uso combinato:
+   - Per impostare una password che scade ogni 7 giorni, con un periodo di preavviso di 3 giorni e una durata minima tra i cambi di 1 giorno:
+     'sudo chage -M 7 -m 1 -W 3 nome_utente'
+
+
+#!/bin/bash
+
+adduser --disabled-password --gecos "" esempio
+echo 'esempio:password' | chpasswd
+chage -M 1 esempio
+chage -l esempio
+
+aggiungo un utente esempio con info di default (non chiede full name, room office ecc, --gecos) e senza password (--disabled-password)
+cambio la password inviando in input a chpasswd l'output di echo 'esempio:password'
+imposto ad 1 giorno la durata massima della validità della password
+stampo dettagli sulla scadenza della password
+
+> Secure Flag: Privilege Escalation via Docker Group
+
+Since containers are run with root privileges by default, any user who has access to the Docker daemon (which, in the most common configuration, means that they are a member of the "docker" group) has root privileges in the container.
+
+Con groups si può vedere che l'utente corrente è nel gruppo docker, potendo quindi eseguire comandi docker come docker ps ecc.
+
+Eseguo allora: docker run -v /:/mnt --rm -it alpine chroot /mnt sh  (con whoami verifico che restituisce root!)
+
+fa le seguenti cose:
+
+1. Avvia un container basato sull’immagine Alpine
+	- docker run ... alpine fa partire un container che usa l’immagine alpine come base.
+
+2.Monta la root (/) del sistema host all’interno del container
+	-v /:/mnt dice a Docker di montare la directory root (/) del tuo host nella directory /mnt del container.
+	In altre parole, tutto il contenuto del filesystem del tuo host viene reso visibile (e scrivibile, se non diversamente specificato) all’interno del container, sotto il path /mnt.
+
+3.Avvia in modalità interattiva e rimuove il container alla fine
+	-it combina -i (interattivo, mantiene aperto l’input) e -t (assegna un terminale).
+	--rm fa sì che il container venga rimosso automaticamente una volta che esci dalla shell (cioè quando si chiude il processo principale).
+
+4.Esegue chroot nella directory montata
+	chroot /mnt sh cambia la root del processo all’interno del container da / (del container stesso) a /mnt, che in questo caso corrisponde alla root del tuo sistema host.
+	Dopo questo comando, la shell (sh) vedrà come “/” la root del tuo host, permettendo di navigare e modificare i file del sistema principale (se i permessi lo consentono).
+
+Fix: rimuovo l'utente dal gruppo docker con -> sudo deluser nome_utente nome_gruppo oppure sudo gpasswd -d nome_utente nome_gruppo
+
+
+> Secure Flag: Privilege Escalation via Docker Port
+
+Observe that the Docker daemon is running on a local TCP port.
+Since all containers run with root privileges, any user who can communicate with the Docker daemon can leverage one of its many functionalities to interact with the host as the root user and, in turn, compromise the host server.
+
+Eseguo allora: docker -H tcp://127.0.0.1:2375 run -v /:/mnt --rm -it alpine chroot /mnt sh
+Fa le stesse cose di prima ma sull'host specificato da -H.
+
+Fix: Modifico il file di configurazione del demone di docker /etc/docker/daemon.json e dagli hosts rimuovo il bind TCP a 127.0.0.1:2375 e poi riavvio il demone con systemctl restart docker
+
+> Cercare se esiste un qualche file all'interno della home di un utente che sia scrivibile da tutti gli utenti:
+ sudo find /home/username -type f -perm -0002
+
+- find: È il comando per cercare file o directory in un albero di directory.
+
+- /home: Specifica la directory di partenza per la ricerca. In questo caso, cercherà in /home e in tutte le sue sottodirectory.
+
+- -type f: Limita la ricerca ai file. Non includerà directory, dispositivi speciali, pipe, o altri tipi di file.
+
+- -perm -0002: Cerca file che hanno il permesso di scrittura per "others" (gli altri, ovvero utenti non proprietari e non membri del gruppo associato al file).	
+	0002 rappresenta i permessi in ottale (scrittura per gli "altri").
+	Il prefisso - fa sì che vengano trovati i file con almeno il permesso specificato (non necessariamente solo quello).
+
+find /home -type f -perm -0002	File scrivibili da "others" (o=w), con qualsiasi altro permesso
+find /home -type f -perm -0003	File scrivibili ed eseguibili da "others" (o=wx)
+find /home -type f -perm -0007	File leggibili, scrivibili ed eseguibili da "others" (o=rwx)
+
+> Cercare se esiste una cartella all'interno della home di un utente che sia scrivibile da tutti gli utenti:
+	sudo find /home/username -type d -perm -0002 : uguale a prima ma cambia type ed ora indica una directory
+
+> ESAME SSH : Obbliga ogni utente della piattaforma ad accedere via SSH tramite chiavi asimmetriche. Inoltre, per fare uno scherzo al suo caro amico Feynman, ti chiede di impedirgli di accedere via SSH al server, obbligandolo a venire a Los Alamos. Oppenheimer ti chiede però, visto che è poco pratico con i computer, di permettere soltanto a lui di mantenere l'accesso con password.
+
+Modifica il file /etc/ssh/sshd_config aggiungendo in coda (in questo ordine, DenyUsers va prima delle Match User):
+
+DenyUsers Feynmann
+
+Match User Oppenehimer
+AuthenticationMethods "password"
+
+Match All
+AuthenticationMethods "publickey"
+
+Alla fine riavvia il servizio con sudo systemctl restart sshd
+
+Variante:
+
+PasswordAuthentication no
+PubkeyAuthentication yes
+
+DenyUsers Feynman
+
+Match User Oppenheimer
+    PasswordAuthentication yes
+
+
+
+File bash: 
+
+#!/bin/bash
+
+echo 'DenyUsers Feynmann
+
+Match User Oppenehimer
+AuthenticationMethods "password"
+
+Match All
+AuthenticationMethods "publickey"' >> /etc/ssh/sshd_config
+
+systemctl restart sshd
+
+> ESAME SUDOERS: Limitare l'accesso ai comandi amministrativi (sudo) solo agli utenti che appartengono al gruppo "comandanti".
+
+1. Creare il gruppo "comandanti": sudo groupadd comandanti
+2. Aggiungere utenti al gruppo "comandanti": sudo usermod -aG comandanti user
+3. Modificare la configurazione di /etc/sudoers: %sudo   ALL=(ALL:ALL) ALL deve diventare %comandanti   ALL=(ALL:ALL) ALL
+
+file bash:
+
+#!/bin/bash
+
+sed -i '/%sudo.*ALL=(ALL:ALL) ALL/c\%comandanti ALL=(ALL:ALL) ALL' /etc/sudoers
+
+importante il .* tra sudo e ALL, altrimenti non so quanti spazi ci sono
+
+> ESAME iptables: Le connessioni outbound devono essere tutte permesse TRANNE che verso la porta TCP 8080;
+Il server deve ricevere connessioni inbound sulla porta TCP 80 (webserver) da qualunque sorgente;
+Il server deve permettere connessioni inbound sulla porta TCP 22 (SSH) solamente dal prefisso del Progetto Manhattan 193.204.161.0/24.
+
+#!/bin/bash
+
+iptables -A OUTPUT -p tcp --dport 8080 -j DROP
+iptables -A INPUT -p tcp --dport 80 -j ACCEPT
+iptables -A INPUT -p tcp --dport 22 -s 193.204.161.0/24 -j ACCEPT
+iptables -P INPUT DROP
+iptables -P OUTPUT ACCEPT
+
+
+> ESAME Creazione cartella /ricerca nella root, scrivibile da tutti i membri del gruppo scienziati e da Oppenheimer (il creatore della cartella):
+
+#!/bin/bash
+
+mkdir /ricerca
+chown -R oppenheimer:scienziati /ricerca
+chmod ug+w /ricerca
+chmod g+s /ricerca
+
+chown -R fa cambiare tali proprietari anche a tutti i file nella directory /ricerca (qui non serve, tale directory è vuota)
+poi si imposta il SGID sulla directory per far si che i file creati ereditano il gruppo della directory.
+
+Variante con ACL:
+
+#!/bin/bash
+
+mkdir /ricerca
+chown francesco:scienziati /ricerca
+chmod ug+w /ricerca
+chmod o= /ricerca
+setfacl -m u:francesco:w /ricerca
+setfacl -m g:scienziati:w /ricerca 
+setfacl -d -m u:francesco:w /ricerca
+setfacl -d -m g:scienziati:w /ricerca
+
+qui il SGID non serve, ci sono le ACL
+
+=========================================
+SUID vs SGID - Differenze e utilizzo
+=========================================
+
+[Effetto]
+- SUID sugli eseguibili: Il programma viene eseguito con i permessi del suo proprietario.
+- SGID sugli eseguibili: Il programma viene eseguito con i permessi del suo gruppo.
+- SGID sulle directory: I file creati nella directory ereditano il gruppo della directory.
+
+[Usato per]
+- SUID sugli eseguibili: passwd, sudo, ping.
+- SGID sugli eseguibili: mail, locate.
+- SGID sulle directory: Cartelle condivise tra utenti.
+
+[Funziona sulle directory?]
+- SUID sulle directory:  No, viene ignorato.
+
+ACL : Le ACL permettono di specificare permessi dettagliati per utenti e gruppi, anche oltre il proprietario e il gruppo del file
+
+Sintassi generale: setfacl [opzioni] [permessi] file/directory
+
+getfacl file.txt -> Mostra le ACL di un file/directory
+
+1. -m	setfacl -m u:utente:rw file.txt			Modifica i permessi ACL (aggiunge o cambia permessi)
+        setfacl -m g:gruppo:rw /cartella
+
+2. -x	setfacl -x u:utente file.txt			Rimuove ACL per un utente o gruppo
+
+3. -b	setfacl -b file.txt				Rimuove tutte le ACL su un file
+
+4. -d	setfacl -d -m u:utente:rw /cartella		Imposta ACL predefinita per nuovi file nella directory: le ACL predefinite (default ACL) non determinano il proprietario o il gruppo di un 							file, ma solo i permessi che questi riceveranno se appartengono all'utente o al gruppo specificato.
+
+5. -R	setfacl -R -m g:gruppo:rwx /cartella		Applica ACL in modo ricorsivo su una directory
+
+6. -k	setfacl -k file.txt				Rimuove solo le ACL predefinite
+
+Quando usi Access Control List (ACL) su un file o una directory, esse possono sovrascrivere o integrare i normali permessi UNIX (chmod). 
+Tuttavia, il funzionamento esatto dipende dal mask ACL, ossia il permesso massimo che può essere concesso per quel file/directory.
+
+Esempio:
+
+touch documento.txt
+chmod 640 documento.txt
+ls -l documento.txt
+	-rw-r----- 1 francesco scienziati 0 Jan 16 12:00 documento.txt
+setfacl -m u:eistein:rw documento.txt --> qui einstein ottiene l'accesso il rw al file, anche se non ne è il proprietario e non è nel gruppo!
+getfacl documento.txt
+	# file: documento.txt
+	# owner: francesco
+	# group: scienziati
+	user::rw-
+	user:eistein:rw-
+	group::r--
+	mask::rw-
+	other::---
+
+
+> Imposta Iptables affinchè sia permesso l'accesso alla macchina solo via SSH (TCP port 22) dall'IP 1.2.3.4 e ad un webserver da qualunque IP (TCP port 80 e 443)
+
+iptables -A INPUT -p tcp --dport 22 -s 1.2.3.4 -j ACCEPT
+iptables -A INPUT -p tcp --dport 80 -j ACCEPT
+iptables -A INPUT -p tcp --dport 443 -j ACCEPT
+iptables -P INPUT DROP
+
+> Imposta Iptables affinchè sia bloccato tutto il traffico Internet sulla macchina (gli utenti non possono navigare) ma sia funzionante il webserver (TCP port 80 e 443)
+
+iptables -A INPUT -p tcp --dport 80 -j ACCEPT #accetto tutte le richieste http
+iptables -A INPUT -p tcp --dport 443 -j ACCEPT #accetto tutte le richieste https
+iptables -A OUTPUT -p tcp --sport 80 -j ACCEPT
+iptables -A OUTPUT -p tcp --sport 443 -j ACCEPT
+iptables -A OUTPUT -m state --state ESTABLISHED,RELATED -j ACCEPT #accetto tutte le risposte del server in output (possono essere da porte sorgente diverse da 80,443)
+iptables -P OUTPUT DROP #blocco traffico verso internet degli utenti
+iptables -P INPUT DROP 
+
+> Imposta Iptables affinchè sia permesso l'accesso alla macchina solo via SSH (TCP port 22) e ad un webserver (TCP port 80 e 443)
+
+iptables -A INPUT -p tcp --dport 22 -j ACCEPT
+iptables -A INPUT -p tcp --dport 80 -j ACCEPT
+iptables -A INPUT -p tcp --dport 443 -j ACCEPT
+iptables -P INPUT DROP
+
+nota che il traffico in output è fatto passare perchè la policy di default è ACCEPT
+
+oppure su una unica riga:
+
+iptables -A INPUT -p tcp -m multiport --dports 22,80,443 -j ACCEPT
+iptables -P INPUT DROP
