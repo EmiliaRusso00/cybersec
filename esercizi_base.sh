@@ -64,6 +64,8 @@ sudo find / -user root -perm -2000 -exec ls -ldb {} \; >/tmp/files_with_guid.txt
 # Controlla prima: ls -l /path_to_file
 # chmod u-s /path_to_file 
 # chmod g-s /path_to_file_o_directory
+
+
 # 4.
 # Creare uno unit file di Systemd per permettere una shell aperta a tutti sulla rete 
 # (netcat in modalità listen con il processo /bin/bash) e provare a connettersi dalla propria macchina usando netcat
