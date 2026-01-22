@@ -548,8 +548,8 @@ User: Specifica che il processo viene eseguito come utente root (necessario per 
 7. Connettiti con netcat e ottieni la shell:
 	- nc 127.0.0.1 1234
 
-FILE BASH: uso cat per creare il file ed inserire quel testo. <<EOF indica l'inizio di un input multilinea, > redireziona l'output al file
-!/bin/bash
+FILE BASH: uso cat per creare il file ed inserire quel testo. <<EOF indica l'inizio di un input multilinea, > redireziona l'output al file: 
+#!/bin/bash
 
 cat <<EOF > /etc/systemd/system/netcat1-shell.service
 [Unit]
@@ -581,6 +581,8 @@ echo -e "giga \nmega!" > testo.txt --> echo -e dice di considerare i \n come acc
    
 2. Modifica il file di configurazione di PAM relativo alle password:
    - Apri il file '/etc/pam.d/common-password' (Debian/Ubuntu)
+      --> sudo nano /etc/pam.d/common-password
+
    - Aggiungi o modifica la riga che utilizza il modulo 'pam_pwquality.so'. Ad esempio:
      ```
      password requisite pam_pwquality.so retry=3 minlen=8 ucredit=-1 lcredit=-1 dcredit=-1 ocredit=-1
@@ -626,15 +628,18 @@ password admin admin
 export superusers
 
 3. Aggiornare la configurazione di GRUB:
-	-sudo update-grub
+	-sudo update-grub ; tenendo conto che update-grub sia eseguito con sudo dato che lo script viene lanciato con         sudo ./script.sh; lo so che la password è in chiaro, si dovrebbe prima di fare il cat:
 
 #!/bin/bash
 
-echo 'set superusers="admin"
-password admin s3cr3t
-export superusers' >> /etc/grub.d/40_custom
+cat <<EOF>> /etc/grub.d/40_custom
 
-sudo update-grub
+set superusers="admin"
+password admin s3cr3t
+EOF
+
+update-grub
+
 
 Per verificare se ha funzionato basta avviare il sistema
 chiederà utenza e password alla schermata di selezione del SO
@@ -646,6 +651,9 @@ chiederà utenza e password alla schermata di selezione del SO
 
 2. Modifica i permessi della cartella per permettere l'accesso solo a root:
    - Comando: 'sudo chmod 750 /var/log'
+3. Modifica anche il proprietario di tale cartella:
+	- Comando: sudo chown root:root /var/log
+
    Dove:
      - '7' (rwx): Permessi completi per l'utente proprietario (root).
      - '5' (r-x): Permessi di sola lettura ed esecuzione per il gruppo.
@@ -1024,3 +1032,14 @@ oppure su una unica riga:
 
 iptables -A INPUT -p tcp -m multiport --dports 22,80,443 -j ACCEPT
 iptables -P INPUT DROP
+
+
+# Esercizio della volta scorsa:
+# history: serve a mostrare gli ultimi comandi eseguiti dall'utente corrente
+# sudo last: mostra tutti i comandi e da chi sono stati eseguiti
+# groups: controlli a che gruppo appartiene
+# controlla sudoers
+# journalctl -u (nome_servizio) -> per vedere i log di un servizio specifico
+# journalctl | grep sudo -> per vedere eventi di sicurezza
+# journalctl _UID=1000 -> per vedere i log di un utente
+# journalctl | grep "Failed password" -> tentativi di login falliti
