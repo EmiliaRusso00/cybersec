@@ -762,7 +762,9 @@ Ovvero:
 
 
 >Creare utente con password che scade dopo un giorno
-
+Sapendo che però per impostare/cambiare la password si usa: passwd nome_utente, comando che se eseguito salva poi la password nel file /etc/shadow dove vengono salvate tutte le password hashate (ricorda /etc/shadow è leggibile solo da root, infatti se si esegue:
+ls -l /etc/passwd --> -rw-r--r-- 1 root root /etc/passwd perché contiene informazioni sugli utenti; mentre:
+ls -l /etc/shadow --> -rw-r----- 1 root shadow )
 Principali opzioni del comando chage:
 
 1. Visualizzare le informazioni sulla scadenza della password di un utente:
@@ -804,7 +806,12 @@ Principali opzioni del comando chage:
 Esempio di uso combinato:
    - Per impostare una password che scade ogni 7 giorni, con un periodo di preavviso di 3 giorni e una durata minima tra i cambi di 1 giorno:
      'sudo chage -M 7 -m 1 -W 3 nome_utente'
+In generale se chiede di cambiare la password di un utente, forzandolo:
 
+useradd -m utente
+passwd utente
+chage -M 1 utente
+chage -d 0 utente   # opzionale
 
 #!/bin/bash
 
@@ -814,9 +821,27 @@ chage -M 1 esempio
 chage -l esempio
 
 aggiungo un utente esempio con info di default (non chiede full name, room office ecc, --gecos) e senza password (--disabled-password)
+(altro modo per aggiungere un utente senza password : sudo useradd -m utente_giornaliero, con -m crea la home; per impostarne uno basta fare sudo passwod utente_giornaliero)
 cambio la password inviando in input a chpasswd l'output di echo 'esempio:password'
 imposto ad 1 giorno la durata massima della validità della password
 stampo dettagli sulla scadenza della password
+
+
+
+> Usa docker per effettuare un privilege escalation con groups
+I container:
+	- condividono il kernel dell’host
+	- se mal configurati → accesso diretto al sistema host
+Essere nel gruppo docker può far diventare un utente pari a root:
+groups -> si ottiene che l'utente fa parte di docker potrebbe fare privilege escalation. Type the groups command; observe that you're in the docker group and that you can run Docker commands, such as docker ps (mostra i container attualmente in esecuzione (con -a mostra anche quelli fermi).
+Un altro modo per fare su - senza password è sudo -s 
+Comando: id nome_user -> ti viene mostrato un output di questo tipo:uid=1001(sf) gid=1001(sf) groups=1001(sf),994(docker); 
+Viceversa per cercare un utente con accesso a docker in quanto nel gruppo: getent group docker --> docker:x:994:sf
+Per eliminare un utente da un gruppo: sudo gpasswd -d sf docker
+Per aggiungere un utente ad un gruppo: sudo gpasswd -a utente gruppo
+Con l'opzione -A : si aggiunge l'admin del gruppo, con -M i membri sovrascrivendo quelli già presenti.
+
+>Usa docker per effettuare un privilege escalation con port TCP
 
 > Secure Flag: Privilege Escalation via Docker Group
 
@@ -828,7 +853,8 @@ Eseguo allora: docker run -v /:/mnt --rm -it alpine chroot /mnt sh  (con whoami 
 
 fa le seguenti cose:
 
-1. Avvia un container basato sull’immagine Alpine
+1. Avvia un container basato sull’immagine (immagine: contiene filesystem minimale, programmi base; è la base per creare container) Alpine (Alpine : è una distribuzione Linux estremamemnte piccola contiene i comandi base e /bin/sh)
+
 	- docker run ... alpine fa partire un container che usa l’immagine alpine come base.
 
 2.Monta la root (/) del sistema host all’interno del container
@@ -840,8 +866,16 @@ fa le seguenti cose:
 	--rm fa sì che il container venga rimosso automaticamente una volta che esci dalla shell (cioè quando si chiude il processo principale).
 
 4.Esegue chroot nella directory montata
-	chroot /mnt sh cambia la root del processo all’interno del container da / (del container stesso) a /mnt, che in questo caso corrisponde alla root del tuo sistema host.
-	Dopo questo comando, la shell (sh) vedrà come “/” la root del tuo host, permettendo di navigare e modificare i file del sistema principale (se i permessi lo consentono).
+	chroot /mnt sh : cambia la root del processo all’interno del container da / (del container stesso) a /mnt, che 		in questo caso corrisponde alla root del tuo sistema host.
+Dopo questo comando, la shell (sh) vedrà come “/” la root del tuo host, permettendo di navigare e modificare i file del sistema principale (se i permessi lo consentono). Con chroot <nuova_root> <programma>: 
+Prima:
+/        → filesystem Alpine (container)
+/mnt     → filesystem host
+
+Dopo: 
+/        → filesystem host
+/etc     → /etc dell’host
+/root    → /root dell’host
 
 Fix: rimuovo l'utente dal gruppo docker con -> sudo deluser nome_utente nome_gruppo oppure sudo gpasswd -d nome_utente nome_gruppo
 
@@ -850,11 +884,19 @@ Fix: rimuovo l'utente dal gruppo docker con -> sudo deluser nome_utente nome_gru
 
 Observe that the Docker daemon is running on a local TCP port.
 Since all containers run with root privileges, any user who can communicate with the Docker daemon can leverage one of its many functionalities to interact with the host as the root user and, in turn, compromise the host server.
+La challenge per capire che era su TCP: prima fa fare docker ps e mostra che l'accesso è levato, quindi sembra che sf non sia nel gruppo docker e quindi è sicuro, poi però dice di investigare il file json della configurazione /etc/docker/deamon.json con cat e vedi che c'è hosts con TCP quindi : docker -H tcp://127.0.0.1:2375 ps facendo poi whoami ottieni root. 
 
 Eseguo allora: docker -H tcp://127.0.0.1:2375 run -v /:/mnt --rm -it alpine chroot /mnt sh
 Fa le stesse cose di prima ma sull'host specificato da -H.
 
-Fix: Modifico il file di configurazione del demone di docker /etc/docker/daemon.json e dagli hosts rimuovo il bind TCP a 127.0.0.1:2375 e poi riavvio il demone con systemctl restart docker
+Fix: Modifico il file di configurazione del demone di docker /etc/docker/daemon.json e dagli hosts rimuovo il bind TCP a 127.0.0.1:2375 e poi riavvio il demone con systemctl restart docker; Non solo di base andrebbe rinserito:
+{
+  "hosts": ["unix:///var/run/docker.sock"]
+}
+
+Verifica Fix: 1) ss -lntp | grep 2375 --> nessun output porta chiusa (dipende dalla porta nel json)
+			  2) docker -H tcp://127.0.0.1:2375 ps --> cannot connet to the docker daemon
+
 
 > Cercare se esiste un qualche file all'interno della home di un utente che sia scrivibile da tutti gli utenti:
  sudo find /home/username -type f -perm -0002
