@@ -1,4 +1,5 @@
 >Comandi bash per Linux (curl cheat.sh/[command]):
+https://guide.debianizzati.org/index.php/Guida_ai_comandi_da_terminale_-_Gestione_di_file_e_directory#Elenco_file_directory_(ls)
 
 1. Configurazione delle interfacce
 -----------------------------------
@@ -822,11 +823,9 @@ chage -l esempio
 
 aggiungo un utente esempio con info di default (non chiede full name, room office ecc, --gecos) e senza password (--disabled-password)
 (altro modo per aggiungere un utente senza password : sudo useradd -m utente_giornaliero, con -m crea la home; per impostarne uno basta fare sudo passwod utente_giornaliero)
-cambio la password inviando in input a chpasswd l'output di echo 'esempio:password'
+cambio la password inviando in input a chpasswd l'output di echo 'esempio:password') Nota che chpasswd è molto utile e puoi forza anche determinati algoritmi di cifratura della password con -m : MD5 o -c (specifichi l'algoritmo di hash).
 imposto ad 1 giorno la durata massima della validità della password
 stampo dettagli sulla scadenza della password
-
-
 
 > Usa docker per effettuare un privilege escalation con groups
 I container:
@@ -919,8 +918,22 @@ find /home -type f -perm -0007	File leggibili, scrivibili ed eseguibili da "othe
 	sudo find /home/username -type d -perm -0002 : uguale a prima ma cambia type ed ora indica una directory
 
 > ESAME SSH : Obbliga ogni utente della piattaforma ad accedere via SSH tramite chiavi asimmetriche. Inoltre, per fare uno scherzo al suo caro amico Feynman, ti chiede di impedirgli di accedere via SSH al server, obbligandolo a venire a Los Alamos. Oppenheimer ti chiede però, visto che è poco pratico con i computer, di permettere soltanto a lui di mantenere l'accesso con password.
+SSH è un protocollo per accedere in modo sicuro a un altro computer su rete (anche internet), che cripta tutti i dati scambiati compresa la password. SSH instaura una connessione TCP sulla port 22, negozia crittografia tra client e server e autentica l'utente o con password (l'utente inserisce una password) oppure chiave pubblica/privata (il server controlla se il client ha la chiave privata corrispondente alla chiave pubblica registrata in ~/.ssh/authorized_keys), se l'autenticazione ha successo si ha una shell remota aperta.
 
-Modifica il file /etc/ssh/sshd_config aggiungendo in coda (in questo ordine, DenyUsers va prima delle Match User):
+Obiettivi: 
+1. Tutti gli utenti devono usare solo chiavi SSH
+2. Un utente specifico Feynman non deve poter accedere via SSH (solo login locale)
+3. Un altro utente può ancora usare password
+
+Per questa challenge: sudo cp /etc/ssh/sshd_config /etc/ssh/sshd_config.bak
+Meglio fare una copia del file così se qualcosa va storto puoi:
+sudo cp /etc/ssh/sshd_config.bak /etc/ssh/sshd_config
+sudo systemctl restart ssh
+sudo systemctl status ssh
+
+Per imporre l'uso delle chiavi SSH:
+Modifica il file /etc/ssh/sshd_config aggiungendo in coda (in questo ordine, DenyUsers va prima delle Match User); ovvero va modificato con sudo nano /etc/ssh/sshd_config:
+Soluzione 1:
 
 DenyUsers Feynmann
 
@@ -932,16 +945,17 @@ AuthenticationMethods "publickey"
 
 Alla fine riavvia il servizio con sudo systemctl restart sshd
 
-Variante:
-
+Soluzione 2:
+#Disabilita il login con password 
 PasswordAuthentication no
+# Abilita solo chiavi
 PubkeyAuthentication yes
 
+#Impefisce all'utente specifico di loggarsi via SSH
 DenyUsers Feynman
 
 Match User Oppenheimer
     PasswordAuthentication yes
-
 
 
 File bash: 
@@ -956,9 +970,44 @@ AuthenticationMethods "password"
 Match All
 AuthenticationMethods "publickey"' >> /etc/ssh/sshd_config
 
+#NOTA: PRIMA DI ESEGUIRLO LANCIA ssh -t tale comando controlla che la sintassi in /etc/ssh/ssh_config sia corretta.
 systemctl restart sshd
 
-> ESAME SUDOERS: Limitare l'accesso ai comandi amministrativi (sudo) solo agli utenti che appartengono al gruppo "comandanti".
+#!/bin/bash
+sudo cp /etc/ssh/sshd_config /etc/ssh/sshd_config.bak
+
+sudo sed -i 's/PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
+echo "DenyUsers Feynman" | sudo tee -a /etc/ssh/sshd_config
+echo "Match User Oppenheimer\n    PasswordAuthentication yes" | sudo tee -a /etc/ssh/sshd_config
+
+# Test della sintassi prima di riavviare
+sudo sshd -t
+if [ $? -ne 0 ]; then
+    echo "Errore nella configurazione SSH, ripristino backup!"
+    sudo cp /etc/ssh/sshd_config.bak /etc/ssh/sshd_config
+else
+    # Riavvio solo se ok
+    sudo systemctl restart ssh
+fi
+
+OCCHIO A NON BLOCCARTI L'ACCESSO REMOTO:
+Genera le chiavi ssh:
+
+ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa_esame
+
+Aggiungi quella pubblica al file authorized_keys:
+
+cat ~/.ssh/id_rsa_esame.pub >> ~/.ssh/authorized_keys
+chmod 600 ~/.ssh/authorized_keys
+
+Ora puoi fare il login con le password disabilitate:
+ssh -i ~/.ssh/id_rsa_esame utente@ip_vm
+
+#----------------------------------------------------------------------------------------------------------------------------#
+> ESAME SUDOERS: Limitare l'accesso ai comandi amministrativi (sudo) solo agli utenti che appartengono al gruppo "comandanti".     Nessun altro utente deve avere accesso root o possibilità di escalation
+# Controlla chi è nel gruppo sudo: 
+getent group sudo 
+sudo gpasswd -d Phoenix sudo
 
 1. Creare il gruppo "comandanti": sudo groupadd comandanti
 2. Aggiungere utenti al gruppo "comandanti": sudo usermod -aG comandanti user
@@ -972,19 +1021,19 @@ sed -i '/%sudo.*ALL=(ALL:ALL) ALL/c\%comandanti ALL=(ALL:ALL) ALL' /etc/sudoers
 
 importante il .* tra sudo e ALL, altrimenti non so quanti spazi ci sono
 
-> ESAME iptables: Le connessioni outbound devono essere tutte permesse TRANNE che verso la porta TCP 8080;
-Il server deve ricevere connessioni inbound sulla porta TCP 80 (webserver) da qualunque sorgente;
-Il server deve permettere connessioni inbound sulla porta TCP 22 (SSH) solamente dal prefisso del Progetto Manhattan 193.204.161.0/24.
-
 #!/bin/bash
 
-iptables -A OUTPUT -p tcp --dport 8080 -j DROP
-iptables -A INPUT -p tcp --dport 80 -j ACCEPT
-iptables -A INPUT -p tcp --dport 22 -s 193.204.161.0/24 -j ACCEPT
-iptables -P INPUT DROP
-iptables -P OUTPUT ACCEPT
+# Crea il gruppo comandanti se non esiste
+if ! getent group comandanti > /dev/null; then
+    sudo groupadd comandanti
+fi
+
+# Modifica /etc/sudoers sostituendo la riga per il gruppo sudo
+sudo cp /etc/sudoers /etc/sudoers.bak   # backup di sicurezza
+sudo sed -i 's/^%sudo\s\+ALL=(ALL:ALL)\s\+ALL$/%comandanti   ALL=(ALL:ALL) ALL/' /etc/sudoers
 
 
+#-------------------------------------------------------------------------------------------------------------------------------------#
 > ESAME Creazione cartella /ricerca nella root, scrivibile da tutti i membri del gruppo scienziati e da Oppenheimer (il creatore della cartella):
 
 #!/bin/bash
@@ -1069,6 +1118,51 @@ getfacl documento.txt
 	other::---
 
 
+#-----------------------------------------------------------------------------------------------------------------# 
+Esercizio della volta scorsa (27/12/2025):
+
+# history: serve a mostrare gli ultimi comandi eseguiti dall'utente corrente
+# sudo last: mostra tutti i comandi e da chi sono stati eseguiti
+# groups: controlli a che gruppo appartiene
+# controlla sudoers
+# journalctl -u (nome_servizio) -> per vedere i log di un servizio specifico
+# journalctl | grep sudo -> per vedere eventi di sicurezza
+# journalctl _UID=1000 -> per vedere i log di un utente
+# journalctl | grep "Failed password" -> tentativi di login falliti
+
+# Leva l'utente happy dal gruppo sudo, ma modifica (/etc/group)
+chage -d 0 utente
+sudo gpasswd -d happy sudo #leva l'utente happy dal gruppo sudo
+
+#-----------------------------------------------------------------------------------------------------------# 
+ESERCIZIO: Durante una verifica di routine, Maverick scopre che Filippo è riuscito a ottenere i privilegi di
+amministratore e quindi esiste la possibilità che abbia alterato alcune impostazioni del sistema.
+Aiuta Maverick a capire come Filippo sia riuscito nel suo intento e a impedire che un evento
+simile possa nuovamente accadere.
+
+# pippo è un utente normale, ma sta usando dei privilegi da root 
+# su pippo mi chiede la password di pippo, invece:
+sudo su pippo # login come pippo senza password
+history 
+# dalla history vedo che ha eseguito il comando 'sudo su'
+
+# 1. pippo fa parte di un gruppo che ha privilegi di root
+# 2. pippo fa parte di sudoers
+# soluzione: levo pippo da sudoers o da qualsiasi gruppo che gli dia i privilegi di root
+
+sudo visudo # controllo file sudoers, non ci sono informazioni su pippo
+sudo cat /etc/sudoers.d/pippo  # controllo directory sudoers.d
+
+# output del cat: un file pippo che contiene questa riga:
+# pippo ALL=(ALL) NOPASSWD:ALL
+
+sudo rm /etc/sudoers.d/pippo # rimuovo file che da privilegi a pippo
+
+#-------------------------------------------------------------------------------------------------------------------------# 
+
+
+FIREWALL:
+
 > Imposta Iptables affinchè sia permesso l'accesso alla macchina solo via SSH (TCP port 22) dall'IP 1.2.3.4 e ad un webserver da qualunque IP (TCP port 80 e 443)
 
 iptables -A INPUT -p tcp --dport 22 -s 1.2.3.4 -j ACCEPT
@@ -1101,12 +1195,17 @@ iptables -A INPUT -p tcp -m multiport --dports 22,80,443 -j ACCEPT
 iptables -P INPUT DROP
 
 
-# Esercizio della volta scorsa:
-# history: serve a mostrare gli ultimi comandi eseguiti dall'utente corrente
-# sudo last: mostra tutti i comandi e da chi sono stati eseguiti
-# groups: controlli a che gruppo appartiene
-# controlla sudoers
-# journalctl -u (nome_servizio) -> per vedere i log di un servizio specifico
-# journalctl | grep sudo -> per vedere eventi di sicurezza
-# journalctl _UID=1000 -> per vedere i log di un utente
-# journalctl | grep "Failed password" -> tentativi di login falliti
+> ESAME iptables: Le connessioni outbound devono essere tutte permesse TRANNE che verso la porta TCP 8080;
+Il server deve ricevere connessioni inbound sulla porta TCP 80 (webserver) da qualunque sorgente;
+Il server deve permettere connessioni inbound sulla porta TCP 22 (SSH) solamente dal prefisso del Progetto Manhattan 193.204.161.0/24.
+
+#!/bin/bash
+
+iptables -A OUTPUT -p tcp --dport 8080 -j DROP
+iptables -A INPUT -p tcp --dport 80 -j ACCEPT
+iptables -A INPUT -p tcp --dport 22 -s 193.204.161.0/24 -j ACCEPT
+iptables -P INPUT DROP
+iptables -P OUTPUT ACCEPT
+
+
+
