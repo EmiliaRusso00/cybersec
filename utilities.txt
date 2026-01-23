@@ -367,7 +367,13 @@ sudo echo "prova ALL=(ALL:ALL) /usr/bin/nmap" > /etc/sudoers.d/prova
 NOTA > SOVRASCRIVE IL FILE DESTINAZIONE, >> FA UNA APPEND
 
 ------------------------------------------------------------------------------
+> Esempio script per cat /var/log/*:
 
+#!/bin/bash
+
+sudo echo "alessio ALL=(ALL:ALL) NOPASSWD: /usr/bin/cat /var/log/*" >> /etc/sudoers
+
+----------------------------------------------------------------------------------------
 
 >Configura sudo affinchè un utente possa eseguire solo un comando specifico ma senza un parametro (e.s: si puo eseguire nmap ma non nmap -p)
 https://www.sudo.ws/posts/2022/03/sudo-1.9.10-using-regular-expressions-in-the-sudoers-file/
@@ -670,6 +676,14 @@ a drwxr-x--x  9 root root (u=rwx,g=rx,o=x)
 >Trova tutti i processi che hanno un file descriptor aperto dentro la cartella /var/log
 - sudo lsof +D /var/log
 
+In Linux/Unix un file descriptor è un numero intero che identifica un file aperto da un processo. Quando un processo apre qualcosa il kernel gli assegna un file descriptor: 
+	0 → stdin
+	1 → stdout
+	2 → stderr
+	3 → primo file aperto
+	4 → secondo file aperto
+	...
+
 Funzionamento di base di lsof:
 - Il comando 'lsof' (List Open Files) elenca tutti i file aperti dai processi in esecuzione su un sistema.
 - In UNIX/Linux, i "file" non sono solo file regolari, ma includono anche socket di rete, pipe, dispositivi e directory.
@@ -735,6 +749,17 @@ Esempio di utilizzo combinato:
 
 - Trova tutti i processi che utilizzano file nella directory '/var/log', filtrati per un utente specifico, mostrando solo i PID:
   - Comando: 'sudo lsof +D /var/log -u username -t'
+
+Esempio output lsof:
+
+COMMAND   PID USER   FD   TYPE DEVICE SIZE/OFF   NODE NAME
+rsyslogd  512 root   4w   REG  253,0    123456  12345 /var/log/syslog
+sshd      890 root   3r   REG  253,0      4096  12346 /var/log/auth.log
+
+Ovvero:
+	rsyslogd sta scrivendo (4w) su syslog
+	sshd sta leggendo (3r) auth.log
+
 
 >Creare utente con password che scade dopo un giorno
 
