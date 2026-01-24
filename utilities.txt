@@ -1,6 +1,7 @@
 >Comandi bash per Linux (curl cheat.sh/[command]):
 https://guide.debianizzati.org/index.php/Guida_ai_comandi_da_terminale_-_Gestione_di_file_e_directory#Elenco_file_directory_(ls)
 
+
 1. Configurazione delle interfacce
 -----------------------------------
 - ip addr/ip aioi: Visualizza gli indirizzi IP e le interfacce.
