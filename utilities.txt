@@ -1225,3 +1225,22 @@ nmap -T0 fino a -T5 --> velocità (-T4 è veloce mentre T5 è molto aggressivo, 
 nmap -sT → TCP connect (più “visibile”)
 nmap -sU → UDP (più lenta ma importante)
 
+> BurpSuite: Si tratta di una piattaforma che agisce come proxy di intercettazione tra browser e client, consentendo di visualizzare, analizzare e modificare il traffico HTTP/HTTPS in tempo reale per individuare vulnerabilità. (Man in the Middle). È manuale.
+Componenti: 
+- Proxy: intercetta il traffico
+- Repeater: modifica e reinvia sinolge richieste per test manuali
+- Intruder: automazione di attacchi
+- Scanner: scansione automatica delle vulnerabilità
+- Spider: mappatura del sito (crawler)
+Per configurare il proxy: vai su Proxy > Intercept ON e imposta il browser sulla porta 8080 e proxy 127.0.0.1.
+Se si apre una pagina web questa verrò intercettata e si può modificare la richiesta andando poi a cliccare il tasto Forward. 
+Con il tasto destro sulla richiesta si può cliccare su > Send to Repeater e si può modoifcare e reinviare tutte le volte che si vuole. 
+
+> Nikto: scanner automatico per server web. È automatico. 
+Uso classico: 
+nikto -h http://example.com --> questo avvia una scansione completa del server web indicato. 
+All'inizio dell'output ci sono dettagli base cme IP server, dominio e porta usata. Dopo di che si ha anche informazioni relative al server Apache --> qui con la versione possiamo capire se è aggiornato o vulnerabile. 
+Poi con la simbologia + va a trovare tutte le cose trovate durante l'analisi come punti di accesso es: /admin (testare login con Repeater (Burp), provando con credenziali note), info sensibili come phpinfo.php o anche difese mancanti come header HTTP. 
+
+
+
