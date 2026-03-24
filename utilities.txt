@@ -1209,4 +1209,19 @@ iptables -P INPUT DROP
 iptables -P OUTPUT ACCEPT
 
 
+> NMAP: Software open-source che consente di scoprire i dispositivi connessi a una rete, identificare le porte aperte, i servizi aperti (ssh, web server), capire che SO usa un dispositivo e potenziali vulnerabilità. 
+Quello che fa è mandare pacchetti di rete (richieste) a un target (IP o Dominio) e analizza le risposte.
+Classifica le porte come:
+open → c’è un servizio attivo
+closed → porta raggiungibile ma senza servizio
+filtered → bloccata da firewall
+Output: versione del programma Nmap, il sito che si analizza (target) e poi si ha la porta con il numero + il protocollo (tp o udp), lo stato della porta e il servizio associato. 
+Parametri: 
+nmap -O target --> rilevamento SO
+nmap -sV target --> rileva i servizi e le loro versioni
+nmap -p- (oppure -p 8088, 22... oppure 1-1000) scansione tutte e 65535 porte 
+nmap -F --> scansione veloce 
+nmap -T0 fino a -T5 --> velocità (-T4 è veloce mentre T5 è molto aggressivo, meglio scansioneare piano se c'è un firewall)
+nmap -sT → TCP connect (più “visibile”)
+nmap -sU → UDP (più lenta ma importante)
 
