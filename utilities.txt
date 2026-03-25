@@ -1242,5 +1242,40 @@ nikto -h http://example.com --> questo avvia una scansione completa del server w
 All'inizio dell'output ci sono dettagli base cme IP server, dominio e porta usata. Dopo di che si ha anche informazioni relative al server Apache --> qui con la versione possiamo capire se è aggiornato o vulnerabile. 
 Poi con la simbologia + va a trovare tutte le cose trovate durante l'analisi come punti di accesso es: /admin (testare login con Repeater (Burp), provando con credenziali note), info sensibili come phpinfo.php o anche difese mancanti come header HTTP. 
 
+> Netcat (nc): è un piccolo ma potente strumento da riga di comando usato per leggere e scrivere dati attraverso connessioni di rete (TCP/UDP). Si possono testare connessioni di rete, aprire porte e ascoltare connessioni, inviare e ricevere dati manualmente, trasferire dile tra compute, creare semplici chat o shell remote e fare port scanning basilare. 
+Installazione: sudo apt install netcat
+Esempi:
+- nc example.com 80 --> connette al server sulla porta 80 
+- nc -l 1234 --> il computer rimane in ascolto su tale porta. 
+Se si mette un server in ascolto su una porta (comando sopra) si può poi collegare un client con: 
+- nc IP_SERVER 1234 --> ora si può scrivere in entrambi i lati. 
+Port scanning: 
+- nc -zv ip_dispositivo da testare porte_da_testare --> es: nc -zv 192.1.1.128 22-80 (anche server: google.com)
+Reverse Shell: 
+nc -l 4444 -e /bin/bash --> apre una shell rempta utile per amministrazione. 
+NON è sicuro non cifra i dati, meglio usare ssh. 
 
+> WhatWeb: serve per identificare le tecnologie usate da un sito web. Puoi scoprire CSM (Content Management System) è un software che permette di creare e gestire un sito web senza programmare, es: WordPres, Joomla... 
+linguaggi e framework, server web, librerie e plugin e versioni software. 
+- whatweb ip_da_analizzare:8088 --> output è il sito analizzato, la risposta HTTP (codice), paese del server, server web in uso, indirizzo IP del server, titolo della pagina e tecnologia rilevata. 
+- whatweb -a 3 example.com --> modalità di dettagliata, ma più lenta e visibile nei log del server.(-a tra 1 a 4). 
 
+> DIRB è uno strumento da riga di comando usato per fare burte force di directory e file su un sito web. 
+In pratica prova automaticamente tante URL per scoprire:
+- cartelle nascoste
+- file non linkati
+- pagine “segrete”
+esempio: dirb http://target.com o ip_target:porta -f --> costringe il server a mostrare
+
+> Gobuster è uno strumento per fare brute force su directory, file, DNS e virtual host. 
+esempio per le directory e file: gobuster dir -u http://target.com -w wordlist.txt 
+esempio per dns: gobuster dns -d example.com -w subdomains.txt
+Altre opzioni: 
+-x : forza a cercare file con estensioni; es: -x php,txt ...
+-t : quante richieste in parallelo vengono fatte
+Altro esempio: gobuster dir -u http://target.com -w wordlist.txt -k -b 302
+-k: leva gli errori SSL (se il sito è https, leva errori come certificati scaduti ecc..)
+-b: non mostra le risposte con specifici codici. (es: 302 non mostra i redirect)
+Trovate le pagine 200 si possono controllare manualmente se fanno il reindirizzamento. 
+
+> Javascript: Se hai dei file analizzali e controlla funzioni tipo showAdmin, showPanel, showAdminPAel...
