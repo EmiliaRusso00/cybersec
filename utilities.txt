@@ -1279,3 +1279,12 @@ Altro esempio: gobuster dir -u http://target.com -w wordlist.txt -k -b 302
 Trovate le pagine 200 si possono controllare manualmente se fanno il reindirizzamento. 
 
 > Javascript: Se hai dei file analizzali e controlla funzioni tipo showAdmin, showPanel, showAdminPAel...
+
+> Hydra:is a tool used to test passwords by trying many combinations quickly.Works on services like: SSH, FTP e HTTP login forms.
+
+> Metasloit: Metasploit (full name: Metasploit Framework) is a powerful platform for testing system vulnerabilities. Include exploit (entering in the system) and payloads.
+hydra -l <username> -P <password_list> <target> <service>
+Other options:
+-L <user_list>
+-p <password>
+-s <port> (if it's not standard)
